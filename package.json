@@ -1,0 +1,10 @@
+{
+  "name": "napp",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "mobile": "npm run start --prefix mobile",
+    "backend": "npm run dev --prefix backend",
+    "dev": "npm run backend"
+  }
+}

@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi SEP - Application de suivi quotidien pour la sclérose en plaques</title>
+    <meta name="description" content="Application mobile professionnelle pour le suivi quotidien de la sclérose en plaques. Suivez vos symptômes, communiquez avec votre infirmier, et améliorez votre qualité de vie.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+Arabic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2BA6FF;
+            --primary-dark: #0EA5E9;
+            --secondary: #F0F9FF;
+            --text: #0F172A;
+            --text-secondary: #64748B;
+            --text-muted: #94A3B8;
+            --background: #FFFFFF;
+            --card: #F8FAFC;
+            --border: #E2E8F0;
+            --success: #22C55E;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            background: var(--background);
+            line-height: 1.6;
+        }
+
+        /* RTL Support for Arabic */
+        [dir="rtl"] body {
+            font-family: 'Noto Sans Arabic', 'Inter', sans-serif;
+        }
+
+        [dir="rtl"] .hero-content {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .nav-content {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .nav-links {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .feature-card,
+        [dir="rtl"] .role-card,
+        [dir="rtl"] .step {
+            text-align: right;
+        }
+
+        [dir="rtl"] .role-features li {
+            flex-direction: row-reverse;
+        }
+
+        [dir="rtl"] .footer-content {
+            direction: rtl;
+        }
+
+        [dir="rtl"] .footer-links li {
+            text-align: right;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Language Switcher */
+        .lang-switcher {
+            display: flex;
+            gap: 4px;
+            background: var(--card);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .lang-btn {
+            padding: 8px 14px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            background: var(--secondary);
+        }
+
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 24px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            font-size: 28px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .nav-cta {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(43, 166, 255, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 160px 24px 100px;
+            background: linear-gradient(180deg, var(--secondary) 0%, white 100%);
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+
+        .hero-text h1 span {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-text p {
+            font-size: 20px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 500px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 18px 36px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(43, 166, 255, 0.35);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text);
+            padding: 18px 36px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            border: 2px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            background: var(--secondary);
+        }
+
+        .hero-image {
+            position: relative;
+        }
+
+        .phone-mockup {
+            width: 100%;
+            max-width: 320px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .phone-frame {
+            background: linear-gradient(145deg, #1a1a1a, #2d2d2d);
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 50px 100px rgba(0, 0, 0, 0.2);
+        }
+
+        .phone-screen {
+            background: white;
+            border-radius: 32px;
+            overflow: hidden;
+            aspect-ratio: 9/19;
+        }
+
+        .phone-screen img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .phone-placeholder {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .phone-placeholder .icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .phone-placeholder h3 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .phone-placeholder p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .hero-blob {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(135deg, rgba(43, 166, 255, 0.15), rgba(14, 165, 233, 0.1));
+            border-radius: 50%;
+            filter: blur(60px);
+            z-index: 1;
+        }
+
+        .hero-blob-1 {
+            top: -100px;
+            right: -100px;
+        }
+
+        .hero-blob-2 {
+            bottom: -100px;
+            left: -100px;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 100px 24px;
+            background: white;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 700px;
+            margin: 0 auto 60px;
+        }
+
+        .section-header h2 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .section-header p {
+            font-size: 18px;
+            color: var(--text-secondary);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 40px 32px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(43, 166, 255, 0.1);
+        }
+
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            margin-bottom: 24px;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.7;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 100px 24px;
+            background: var(--secondary);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: white;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+
+        .step-line {
+            position: absolute;
+            top: 28px;
+            left: calc(50% + 40px);
+            width: calc(100% - 80px);
+            height: 2px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+        }
+
+        .step:last-child .step-line {
+            display: none;
+        }
+
+        /* Roles Section */
+        .roles {
+            padding: 100px 24px;
+            background: white;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .role-card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 48px;
+            border: 2px solid var(--border);
+            transition: border-color 0.3s;
+        }
+
+        .role-card:hover {
+            border-color: var(--primary);
+        }
+
+        .role-icon {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+
+        .role-card h3 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .role-card p {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+
+        .role-features {
+            list-style: none;
+        }
+
+        .role-features li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 15px;
+        }
+
+        .role-features li:last-child {
+            border-bottom: none;
+        }
+
+        .role-features .check {
+            color: var(--success);
+            font-size: 18px;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: 100px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            text-align: center;
+            color: white;
+        }
+
+        .cta h2 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta p {
+            font-size: 20px;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cta .btn-white {
+            background: white;
+            color: var(--primary);
+            padding: 18px 36px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta .btn-white:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--text);
+            color: white;
+            padding: 60px 24px 30px;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 60px;
+        }
+
+        .footer-brand .logo {
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .footer-links h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text p {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .hero-image {
+                order: -1;
+            }
+
+            .phone-mockup {
+                max-width: 280px;
+            }
+
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .steps {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .step-line {
+                display: none;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero-text h1 {
+                font-size: 36px;
+            }
+
+            .hero-text p {
+                font-size: 16px;
+            }
+
+            .section-header h2 {
+                font-size: 32px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .cta h2 {
+                font-size: 32px;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .phone-mockup {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feature-card, .step, .role-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-content">
+            <a href="#" class="logo">
+                <span class="logo-icon">🩺</span>
+                Suivi SEP
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features" data-i18n="nav_features">Fonctionnalités</a></li>
+                <li><a href="#how-it-works" data-i18n="nav_how_it_works">Comment ça marche</a></li>
+                <li><a href="#roles" data-i18n="nav_roles">Pour qui ?</a></li>
+                <li><a href="#download" data-i18n="nav_download">Télécharger</a></li>
+            </ul>
+            <div class="nav-left">
+                <div class="lang-switcher">
+                    <button class="lang-btn active" data-lang="fr">FR</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="ar">AR</button>
+                </div>
+                <a href="#download" class="nav-cta" data-i18n="nav_cta">Commencer</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1><span data-i18n="hero_title_1">Prenez contrôle de votre</span> <span data-i18n="hero_title_highlight">santé</span> <span data-i18n="hero_title_2">au quotidien</span></h1>
+                <p data-i18n="hero_subtitle">Suivi SEP est une application mobile professionnelle conçue pour aider les patients atteints de sclérose en plaques à suivre leurs symptômes et à communiquer efficacement avec leur équipe soignante.</p>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn-primary" data-i18n="hero_btn_download">📱 Télécharger l'app</a>
+                    <a href="#features" class="btn-secondary" data-i18n="hero_btn_learn">En savoir plus →</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-blob hero-blob-1"></div>
+                <div class="hero-blob hero-blob-2"></div>
+                <div class="phone-mockup">
+                    <div class="phone-frame">
+                        <div class="phone-screen">
+                            <div class="phone-placeholder">
+                                <div class="icon">🩺</div>
+                                <h3 data-i18n="phone_title">Suivi SEP</h3>
+                                <p data-i18n="phone_subtitle">Votre santé, suivie au quotidien</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="features_title">Fonctionnalités principales</h2>
+                <p data-i18n="features_subtitle">Des outils pensés pour simplifier le suivi de votre santé et améliorer la communication avec vos soignants.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 data-i18n="feature_1_title">Suivi quotidien</h3>
+                    <p data-i18n="feature_1_desc">Enregistrez vos symptômes chaque jour : fatigue, douleur, difficultés de marche et vision. Visualisez votre évolution dans le temps.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3 data-i18n="feature_2_title">Alertes instantanées</h3>
+                    <p data-i18n="feature_2_desc">Signalez rapidement tout changement important à votre infirmier. Recevez des notifications pour ne rien manquer.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3 data-i18n="feature_3_title">Historique complet</h3>
+                    <p data-i18n="feature_3_desc">Accédez à l'historique de vos rapports avec des graphiques clairs. Identifiez les tendances et partagez les données avec vos médecins.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3 data-i18n="feature_4_title">Suivi patient-infirmier</h3>
+                    <p data-i18n="feature_4_desc">Les infirmiers peuvent suivre plusieurs patients, recevoir leurs alertes et consulter leurs historiques de santé.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3 data-i18n="feature_5_title">Données sécurisées</h3>
+                    <p data-i18n="feature_5_desc">Vos données de santé sont chiffrées et protégées. Conformité avec les standards de sécurité médicale.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3 data-i18n="feature_6_title">Interface intuitive</h3>
+                    <p data-i18n="feature_6_desc">Une interface moderne et facile à utiliser, conçue pour tous les âges. Navigation simple et rapide.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="how_title">Comment ça marche ?</h2>
+                <p data-i18n="how_subtitle">Commencez à suivre votre santé en quelques minutes.</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-line"></div>
+                    <h3 data-i18n="step_1_title">Téléchargez l'app</h3>
+                    <p data-i18n="step_1_desc">Disponible sur iOS et Android. Créez votre compte en quelques secondes.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-line"></div>
+                    <h3 data-i18n="step_2_title">Complétez votre profil</h3>
+                    <p data-i18n="step_2_desc">Indiquez votre rôle (patient ou infirmier) et connectez-vous à votre équipe soignante.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-line"></div>
+                    <h3 data-i18n="step_3_title">Suivez votre santé</h3>
+                    <p data-i18n="step_3_desc">Enregistrez vos symptômes quotidiens et recevez des conseils personnalisés.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3 data-i18n="step_4_title">Restez connecté</h3>
+                    <p data-i18n="step_4_desc">Échangez avec votre infirmier et partagez vos données lors de vos consultations.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roles Section -->
+    <section class="roles" id="roles">
+        <div class="container">
+            <div class="section-header">
+                <h2 data-i18n="roles_title">Conçu pour deux rôles</h2>
+                <p data-i18n="roles_subtitle">Une application adaptée aux besoins des patients et des professionnels de santé.</p>
+            </div>
+            <div class="roles-grid">
+                <div class="role-card">
+                    <div class="role-icon">👤</div>
+                    <h3 data-i18n="patient_title">Patient</h3>
+                    <p data-i18n="patient_desc">Prenez une part active dans le suivi de votre santé.</p>
+                    <ul class="role-features">
+                        <li><span class="check">✓</span> <span data-i18n="patient_feature_1">Rapports quotidiens de symptômes</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="patient_feature_2">Historique personnel avec graphiques</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="patient_feature_3">Envoi d'alertes à l'infirmier</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="patient_feature_4">Notifications et rappels</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="patient_feature_5">Communication sécurisée</span></li>
+                    </ul>
+                </div>
+                <div class="role-card">
+                    <div class="role-icon">👩‍⚕️</div>
+                    <h3 data-i18n="nurse_title">Infirmier</h3>
+                    <p data-i18n="nurse_desc">Suivez vos patients efficacement et intervenez rapidement.</p>
+                    <ul class="role-features">
+                        <li><span class="check">✓</span> <span data-i18n="nurse_feature_1">Liste des patients assignés</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="nurse_feature_2">Réception des alertes en temps réel</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="nurse_feature_3">Historique de chaque patient</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="nurse_feature_4">Marquage des alertes résolues</span></li>
+                        <li><span class="check">✓</span> <span data-i18n="nurse_feature_5">Vue d'ensemble des états de santé</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta" id="download">
+        <div class="container">
+            <h2 data-i18n="cta_title">Commencez dès aujourd'hui</h2>
+            <p data-i18n="cta_subtitle">Rejoignez des milliers de patients et d'infirmiers qui utilisent Suivi SEP pour améliorer la qualité des soins.</p>
+            <div class="cta-buttons">
+                <a href="#" class="btn-white" data-i18n="cta_appstore">📱 App Store</a>
+                <a href="#" class="btn-white" data-i18n="cta_playstore">🤖 Google Play</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <span class="logo-icon">🩺</span>
+                    Suivi SEP
+                </a>
+                <p data-i18n="footer_desc">Application mobile professionnelle pour le suivi quotidien de la sclérose en plaques. Développée avec passion pour améliorer la qualité de vie des patients.</p>
+            </div>
+            <div class="footer-links">
+                <h4 data-i18n="footer_product">Produit</h4>
+                <ul>
+                    <li><a href="#features" data-i18n="nav_features">Fonctionnalités</a></li>
+                    <li><a href="#how-it-works" data-i18n="nav_how_it_works">Comment ça marche</a></li>
+                    <li><a href="#roles" data-i18n="nav_roles">Pour qui ?</a></li>
+                    <li><a href="#download" data-i18n="nav_download">Télécharger</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4 data-i18n="footer_support">Support</h4>
+                <ul>
+                    <li><a href="#" data-i18n="footer_help">Centre d'aide</a></li>
+                    <li><a href="#" data-i18n="footer_faq">FAQ</a></li>
+                    <li><a href="#" data-i18n="footer_contact">Contact</a></li>
+                    <li><a href="#" data-i18n="footer_community">Communauté</a></li>
+                </ul>
+            </div>
+            <div class="footer-links">
+                <h4 data-i18n="footer_legal">Légal</h4>
+                <ul>
+                    <li><a href="#" data-i18n="footer_privacy">Confidentialité</a></li>
+                    <li><a href="#" data-i18n="footer_terms">Conditions d'utilisation</a></li>
+                    <li><a href="#" data-i18n="footer_gdpr">RGPD</a></li>
+                    <li><a href="#" data-i18n="footer_security">Sécurité</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p data-i18n="footer_copyright">© 2024 Suivi SEP. Tous droits réservés.</p>
+            <p data-i18n="footer_made">Fait avec ❤️ pour la communauté SEP</p>
+        </div>
+    </footer>
+
+    <script src="translations.js"></script>
+    <script>
+        // Current language
+        let currentLang = 'fr';
+
+        // Translation function
+        function t(key) {
+            return translations[currentLang]?.[key] || translations['fr']?.[key] || key;
+        }
+
+        // Apply translations
+        function applyTranslations(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang]?.[key]) {
+                    el.textContent = translations[lang][key];
+                }
+            });
+        }
+
+        // Language switcher
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.getAttribute('data-lang');
+                document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyTranslations(lang);
+                localStorage.setItem('lang', lang);
+            });
+        });
+
+        // Load saved language
+        const savedLang = localStorage.getItem('lang') || 'fr';
+        const savedBtn = document.querySelector(`.lang-btn[data-lang="${savedLang}"]`);
+        if (savedBtn) {
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            savedBtn.classList.add('active');
+            applyTranslations(savedLang);
+        }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navbar background on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.querySelector('nav');
+            if (window.scrollY > 50) {
+                nav.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.1)';
+            } else {
+                nav.style.boxShadow = 'none';
+            }
+        });
+
+        // Intersection Observer for animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .step, .role-card').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
