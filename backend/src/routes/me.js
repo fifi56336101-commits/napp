@@ -12,6 +12,36 @@ router.get('/', requireDb, requireAuth, async (req, res) => {
   return res.json({ user });
 });
 
+router.patch('/', requireDb, requireAuth, async (req, res) => {
+  const { name, nurseEmail } = req.body || {};
+  
+  const updates = {};
+  
+  if (name !== undefined) {
+    if (typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+    updates.name = name.trim();
+  }
+  
+  if (nurseEmail !== undefined) {
+    updates.nurseEmail = nurseEmail ? nurseEmail.trim() : null;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user.sub,
+    { $set: updates },
+    { new: true }
+  ).select('-passwordHash');
+
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  return res.json({ user });
+});
+
 router.post('/push-token', requireDb, requireAuth, async (req, res) => {
   const { expoPushToken } = req.body || {};
   if (!expoPushToken) return res.status(400).json({ error: 'Missing expoPushToken' });

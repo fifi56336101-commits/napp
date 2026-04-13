@@ -8,6 +8,7 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ['patient', 'nurse'], required: true },
 
     assignedNurseId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    nurseEmail: { type: String, default: null, lowercase: true, trim: true },
 
     expoPushToken: { type: String, default: null },
   },
