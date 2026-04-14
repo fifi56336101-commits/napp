@@ -25,7 +25,18 @@ router.patch('/', requireDb, requireAuth, async (req, res) => {
   }
   
   if (nurseEmail !== undefined) {
-    updates.nurseEmail = nurseEmail ? nurseEmail.trim() : null;
+    const email = nurseEmail ? nurseEmail.trim().toLowerCase() : null;
+    updates.nurseEmail = email;
+    
+    // Link the nurse by assignedNurseId
+    if (email) {
+      const nurse = await User.findOne({ email, role: 'nurse' });
+      if (nurse) {
+        updates.assignedNurseId = nurse._id;
+      }
+    } else {
+      updates.assignedNurseId = null;
+    }
   }
 
   if (Object.keys(updates).length === 0) {
