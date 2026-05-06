@@ -4,26 +4,36 @@ import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text,
 import { Badge, Card, colors, EmptyState, Header } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { demoGetReports, DemoReport } from '@/lib/demo-storage';
+import { useI18n } from '@/lib/i18n';
+
+type Report = {
+  _id: string;
+  motorDisorders: number;
+  balanceWalking: number;
+  urinaryDisorders: number;
+  cognitiveDisorders: number;
+  fatigue?: number;
+  pain?: number;
+  walkingDifficulty?: number;
+  vision?: number;
+  comment?: string;
+  createdAt: string;
+};
 
 export default function PatientHistoryScreen() {
-  const { isDemo } = useAuth();
+  useAuth();
+  const { t } = useI18n();
 
-  const [reports, setReports] = useState<DemoReport[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
 
   const load = async () => {
     try {
       setLoading(true);
-      if (isDemo) {
-        const local = await demoGetReports();
-        setReports(local);
-      } else {
-        const res = await api.get('/reports/me');
-        setReports(res.data.reports || []);
-      }
+      const res = await api.get('/reports/me');
+      setReports(res.data.reports || []);
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de charger');
+      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -40,10 +50,10 @@ export default function PatientHistoryScreen() {
     yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
-      return `Aujourd'hui à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('today')} ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
     if (date.toDateString() === yesterday.toDateString()) {
-      return `Hier à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
+      return `${t('yesterday')} ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
     }
     return date.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   };
@@ -54,21 +64,25 @@ export default function PatientHistoryScreen() {
     return colors.danger;
   };
 
-  const getAverageScore = (r: DemoReport) => {
-    return ((r.fatigue + r.pain + r.walkingDifficulty + r.vision) / 4).toFixed(1);
+  const getAverageScore = (r: Report) => {
+    const m = Number.isFinite(r.motorDisorders) ? r.motorDisorders : 0;
+    const b = Number.isFinite(r.balanceWalking) ? r.balanceWalking : 0;
+    const u = Number.isFinite(r.urinaryDisorders) ? r.urinaryDisorders : 0;
+    const c = Number.isFinite(r.cognitiveDisorders) ? r.cognitiveDisorders : 0;
+    return ((m + b + u + c) / 4).toFixed(1);
   };
 
   return (
     <View style={styles.container}>
       <Header
-        title="Historique"
-        subtitle={`${reports.length} rapport${reports.length !== 1 ? 's' : ''}`}
+        title={t('history')}
+        subtitle={`${reports.length} ${reports.length !== 1 ? t('reports') : t('report')}`}
         rightAction={
           <TouchableOpacity onPress={load} disabled={loading} style={styles.refreshBtn}>
             {loading ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Text style={styles.refreshText}>↻</Text>
+              <Text style={styles.refreshText}></Text>
             )}
           </TouchableOpacity>
         }
@@ -84,8 +98,8 @@ export default function PatientHistoryScreen() {
         {reports.length === 0 ? (
           <EmptyState
             icon="📋"
-            title="Aucun rapport"
-            description="Vos rapports quotidiens apparaîtront ici. Commencez par enregistrer votre état du jour."
+            title={t('noReports')}
+            description={t('noReportsDesc')}
           />
         ) : (
           reports.map((r, index) => (
@@ -94,7 +108,7 @@ export default function PatientHistoryScreen() {
                 <View style={styles.dateContainer}>
                   <Text style={styles.dateText}>{formatDate(r.createdAt)}</Text>
                   <Badge
-                    label={`Moyenne: ${getAverageScore(r)}`}
+                    label={`${t('average')}: ${getAverageScore(r)}`}
                     variant={Number(getAverageScore(r)) <= 3 ? 'success' : Number(getAverageScore(r)) <= 6 ? 'warning' : 'danger'}
                     size="medium"
                   />
@@ -103,45 +117,45 @@ export default function PatientHistoryScreen() {
 
               <View style={styles.metricsGrid}>
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>😴</Text>
-                  <Text style={styles.metricLabel}>Fatigue</Text>
-                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.fatigue) + '30' }]}>
-                    <View style={[styles.metricFill, { width: `${r.fatigue * 10}%`, backgroundColor: getScoreColor(r.fatigue) }]} />
+                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricLabel}>{t('motorDisorders')}</Text>
+                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.motorDisorders) + '30' }]}>
+                    <View style={[styles.metricFill, { width: `${r.motorDisorders * 10}%`, backgroundColor: getScoreColor(r.motorDisorders) }]} />
                   </View>
-                  <Text style={[styles.metricValue, { color: getScoreColor(r.fatigue) }]}>{r.fatigue}</Text>
+                  <Text style={[styles.metricValue, { color: getScoreColor(r.motorDisorders) }]}>{r.motorDisorders}</Text>
                 </View>
 
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>😣</Text>
-                  <Text style={styles.metricLabel}>Douleur</Text>
-                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.pain) + '30' }]}>
-                    <View style={[styles.metricFill, { width: `${r.pain * 10}%`, backgroundColor: getScoreColor(r.pain) }]} />
+                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricLabel}>{t('balanceWalking')}</Text>
+                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.balanceWalking) + '30' }]}>
+                    <View style={[styles.metricFill, { width: `${r.balanceWalking * 10}%`, backgroundColor: getScoreColor(r.balanceWalking) }]} />
                   </View>
-                  <Text style={[styles.metricValue, { color: getScoreColor(r.pain) }]}>{r.pain}</Text>
+                  <Text style={[styles.metricValue, { color: getScoreColor(r.balanceWalking) }]}>{r.balanceWalking}</Text>
                 </View>
 
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>🚶</Text>
-                  <Text style={styles.metricLabel}>Marche</Text>
-                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.walkingDifficulty) + '30' }]}>
-                    <View style={[styles.metricFill, { width: `${r.walkingDifficulty * 10}%`, backgroundColor: getScoreColor(r.walkingDifficulty) }]} />
+                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricLabel}>{t('urinaryDisorders')}</Text>
+                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.urinaryDisorders) + '30' }]}>
+                    <View style={[styles.metricFill, { width: `${r.urinaryDisorders * 10}%`, backgroundColor: getScoreColor(r.urinaryDisorders) }]} />
                   </View>
-                  <Text style={[styles.metricValue, { color: getScoreColor(r.walkingDifficulty) }]}>{r.walkingDifficulty}</Text>
+                  <Text style={[styles.metricValue, { color: getScoreColor(r.urinaryDisorders) }]}>{r.urinaryDisorders}</Text>
                 </View>
 
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>👁️</Text>
-                  <Text style={styles.metricLabel}>Vision</Text>
-                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.vision) + '30' }]}>
-                    <View style={[styles.metricFill, { width: `${r.vision * 10}%`, backgroundColor: getScoreColor(r.vision) }]} />
+                  <Text style={styles.metricIcon}>🧠</Text>
+                  <Text style={styles.metricLabel}>{t('cognitiveDisorders')}</Text>
+                  <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.cognitiveDisorders) + '30' }]}>
+                    <View style={[styles.metricFill, { width: `${r.cognitiveDisorders * 10}%`, backgroundColor: getScoreColor(r.cognitiveDisorders) }]} />
                   </View>
-                  <Text style={[styles.metricValue, { color: getScoreColor(r.vision) }]}>{r.vision}</Text>
+                  <Text style={[styles.metricValue, { color: getScoreColor(r.cognitiveDisorders) }]}>{r.cognitiveDisorders}</Text>
                 </View>
               </View>
 
               {r.comment && (
                 <View style={styles.commentContainer}>
-                  <Text style={styles.commentLabel}>📝 Note</Text>
+                  <Text style={styles.commentLabel}>📝 {t('note')}</Text>
                   <Text style={styles.commentText}>{r.comment}</Text>
                 </View>
               )}

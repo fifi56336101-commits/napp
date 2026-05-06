@@ -1,19 +1,27 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { Button, colors, Input } from '@/components/ui';
 
 import { api } from '@/lib/api';
 import { registerPushToken, useAuth } from '@/lib/auth-context';
+import { Language, useI18n } from '@/lib/i18n';
 import { getExpoPushTokenSafely } from '@/lib/push';
 
 type Role = 'patient' | 'nurse';
 
+const LANGUAGES = [
+  { code: 'fr' as Language, label: 'Français', flag: 'fr' },
+  { code: 'en' as Language, label: 'English', flag: 'gb' },
+  { code: 'ar' as Language, label: 'Arabic', flag: 'sa' },
+];
+
 export default function RegisterScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { t, language, setLanguage } = useI18n();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -24,7 +32,7 @@ export default function RegisterScreen() {
 
   const onRegister = async () => {
     if (!name || !email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
+      Alert.alert(t('error'), t('fillRequired'));
       return;
     }
     try {
@@ -48,10 +56,15 @@ export default function RegisterScreen() {
 
       router.replace('/');
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Inscription impossible');
+      Alert.alert(t('error'), e?.response?.data?.error || t('registerError'));
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFlag = (code: string) => {
+    const flags: Record<string, string> = { fr: 'fr', en: 'gb', ar: 'sa' };
+    return flags[code] || 'fr';
   };
 
   return (
@@ -62,12 +75,28 @@ export default function RegisterScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
+        {/* Language Selector */}
+        <View style={styles.langSelector}>
+          {LANGUAGES.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
+              style={[
+                styles.langChip,
+                language === lang.code && styles.langChipActive,
+              ]}
+              onPress={() => setLanguage(lang.code)}
+            >
+              <Text style={styles.langFlag}>{getFlag(lang.code)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>← Retour</Text>
+          <Text style={styles.backText}> {t('back')}</Text>
         </TouchableOpacity>
         <Text style={styles.logo}>✨</Text>
-        <Text style={styles.title}>Créer un compte</Text>
-        <Text style={styles.subtitle}>Rejoignez la communauté</Text>
+        <Text style={styles.title}>{t('registerTitle')}</Text>
+        <Text style={styles.subtitle}>{t('registerSubtitle')}</Text>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -75,36 +104,36 @@ export default function RegisterScreen() {
         style={styles.content}
       >
         <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
-          <Text style={styles.sectionTitle}>Informations personnelles</Text>
+          <Text style={styles.sectionTitle}>{t('personalInfo')}</Text>
 
           <Input
-            label="Nom complet"
+            label={t('fullName')}
             value={name}
             onChangeText={setName}
-            placeholder="Jean Dupont"
+            placeholder={t('namePlaceholder')}
             icon={<Text style={{ fontSize: 18 }}>👤</Text>}
           />
 
           <Input
-            label="Email"
+            label={t('email')}
             value={email}
             onChangeText={setEmail}
-            placeholder="votre@email.com"
+            placeholder={t('emailPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             icon={<Text style={{ fontSize: 18 }}>📧</Text>}
           />
 
           <Input
-            label="Mot de passe"
+            label={t('password')}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
+            placeholder={t('passwordPlaceholder')}
             secureTextEntry
             icon={<Text style={{ fontSize: 18 }}>🔒</Text>}
           />
 
-          <Text style={styles.sectionTitle}>Type de compte</Text>
+          <Text style={styles.sectionTitle}>{t('accountType')}</Text>
 
           <View style={styles.roleContainer}>
             <TouchableOpacity
@@ -115,8 +144,8 @@ export default function RegisterScreen() {
               ]}
             >
               <Text style={styles.roleIcon}>👤</Text>
-              <Text style={[styles.roleTitle, role === 'patient' && styles.roleTitleActive]}>Patient</Text>
-              <Text style={styles.roleDesc}>Suivez votre santé quotidienne</Text>
+              <Text style={[styles.roleTitle, role === 'patient' && styles.roleTitleActive]}>{t('patient')}</Text>
+              <Text style={styles.roleDesc}>{t('followHealth')}</Text>
               {role === 'patient' && <View style={styles.roleCheck} />}
             </TouchableOpacity>
 
@@ -128,20 +157,20 @@ export default function RegisterScreen() {
               ]}
             >
               <Text style={styles.roleIcon}>👩‍⚕️</Text>
-              <Text style={[styles.roleTitle, role === 'nurse' && styles.roleTitleActive]}>Infirmier</Text>
-              <Text style={styles.roleDesc}>Gérez vos patients</Text>
+              <Text style={[styles.roleTitle, role === 'nurse' && styles.roleTitleActive]}>{t('nurse')}</Text>
+              <Text style={styles.roleDesc}>{t('managePatients')}</Text>
               {role === 'nurse' && <View style={styles.roleCheck} />}
             </TouchableOpacity>
           </View>
 
           {role === 'patient' && (
             <View style={styles.nurseSection}>
-              <Text style={styles.sectionTitle}>Votre infirmier</Text>
+              <Text style={styles.sectionTitle}>{t('yourNurse')}</Text>
               <Input
-                label="Email de l'infirmier (optionnel)"
+                label={t('nurseEmail')}
                 value={nurseEmail}
                 onChangeText={setNurseEmail}
-                placeholder="infirmier@email.com"
+                placeholder={t('nurseEmailPlaceholder')}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 icon={<Text style={{ fontSize: 18 }}>👨‍⚕️</Text>}
@@ -150,7 +179,7 @@ export default function RegisterScreen() {
           )}
 
           <Button
-            title={loading ? 'Création...' : 'Créer mon compte'}
+            title={loading ? t('registering') : t('registerButton')}
             onPress={onRegister}
             loading={loading}
             size="large"
@@ -173,6 +202,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
+  },
+  langSelector: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  langChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  langChipActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  langFlag: {
+    fontSize: 16,
   },
   backBtn: {
     marginBottom: 16,

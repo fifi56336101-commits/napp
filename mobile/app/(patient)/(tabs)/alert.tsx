@@ -1,23 +1,24 @@
-import React, { useState, useCallback } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, Card, colors, Header, Input } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { demoAddAlert, DEMO_PATIENT } from '@/lib/demo-storage';
+import { useI18n } from '@/lib/i18n';
 
 const QUICK_REASONS = [
-  { icon: '😣', label: 'Douleur intense' },
-  { icon: '😴', label: 'Fatigue extrême' },
-  { icon: '🚶', label: 'Difficulté à marcher' },
-  { icon: '👁️', label: 'Troubles visuels' },
-  { icon: '🧠', label: 'Confusion' },
-  { icon: '🌡️', label: 'Fièvre' },
+  { icon: '', labelKey: 'motorWeakness' as const },
+  { icon: '', labelKey: 'balanceLoss' as const },
+  { icon: '', labelKey: 'urinaryUrgency' as const },
+  { icon: '', labelKey: 'confusion' as const },
+  { icon: '', labelKey: 'visionProblems' as const },
+  { icon: '', labelKey: 'fever' as const },
 ];
 
 export default function PatientAlertScreen() {
-  const { isDemo } = useAuth();
+  useAuth();
+  const { t } = useI18n();
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,38 +26,34 @@ export default function PatientAlertScreen() {
 
   const submit = async () => {
     if (!message.trim()) {
-      Alert.alert('Erreur', 'Veuillez décrire le changement');
+      Alert.alert(t('error'), t('describeChangeError'));
       return;
     }
     try {
       setLoading(true);
-      if (isDemo) {
-        await demoAddAlert({ patientId: DEMO_PATIENT._id, message: message.trim() });
-        Alert.alert('✅ Envoyé', 'Votre infirmier a été notifié (mode démo)');
-      } else {
-        const res = await api.post('/alerts', { message });
-        Alert.alert('✅ Envoyé', res.data.push?.ok ? 'Notification envoyée à l\'infirmier' : 'Alerte enregistrée');
-      }
+      const res = await api.post('/alerts', { message });
+      Alert.alert(t('success'), res.data.push?.ok ? t('alertSent') : t('alertSaved'));
       setMessage('');
       setSelectedReason(null);
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible d\'envoyer');
+      Alert.alert(t('error'), e?.response?.data?.error || t('sendError'));
     } finally {
       setLoading(false);
     }
   };
 
-  const selectReason = useCallback((reason: string) => {
+  const selectReason = useCallback((reasonKey: string) => {
+    const reason = t(reasonKey as any);
     setSelectedReason(reason);
-    const parts = message.split('\n').filter(p => !QUICK_REASONS.some(q => p.includes(q.label)));
+    const parts = message.split('\n').filter(p => !QUICK_REASONS.some(q => p.includes(t(q.labelKey as any))));
     setMessage([reason, ...parts].join('\n').trim());
-  }, [message]);
+  }, [message, t]);
 
   return (
     <View style={styles.container}>
       <Header
-        title="Signaler"
-        subtitle="Changement important"
+        title={t('alert')}
+        subtitle={t('whenToAlert')}
       />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -69,34 +66,34 @@ export default function PatientAlertScreen() {
         >
           <Text style={styles.warningIcon}>⚠️</Text>
           <View style={styles.warningContent}>
-            <Text style={styles.warningTitle}>Quand signaler ?</Text>
+            <Text style={styles.warningTitle}>{t('whenToAlert')}</Text>
             <Text style={styles.warningText}>
-              Utilisez cette fonction pour prévenir votre infirmier de tout changement important dans votre état de santé.
+              {t('whenToAlertDesc')}
             </Text>
           </View>
         </LinearGradient>
 
         {/* Quick Reasons */}
         <Card>
-          <Text style={styles.cardTitle}>Raison principale</Text>
-          <Text style={styles.cardSubtitle}>Sélectionnez une option ou décrivez ci-dessous</Text>
+          <Text style={styles.cardTitle}>{t('mainReason')}</Text>
+          <Text style={styles.cardSubtitle}>{t('selectOption')}</Text>
 
           <View style={styles.reasonsGrid}>
             {QUICK_REASONS.map((reason) => (
               <TouchableOpacity
-                key={reason.label}
-                onPress={() => selectReason(reason.label)}
+                key={reason.labelKey}
+                onPress={() => selectReason(reason.labelKey)}
                 style={[
                   styles.reasonChip,
-                  selectedReason === reason.label && styles.reasonChipActive,
+                  selectedReason === t(reason.labelKey as any) && styles.reasonChipActive,
                 ]}
               >
                 <Text style={styles.reasonIcon}>{reason.icon}</Text>
                 <Text style={[
                   styles.reasonLabel,
-                  selectedReason === reason.label && styles.reasonLabelActive,
+                  selectedReason === t(reason.labelKey as any) && styles.reasonLabelActive,
                 ]}>
-                  {reason.label}
+                  {t(reason.labelKey as any)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -105,11 +102,11 @@ export default function PatientAlertScreen() {
 
         {/* Description */}
         <Card>
-          <Text style={styles.cardTitle}>Description</Text>
+          <Text style={styles.cardTitle}>{t('description')}</Text>
           <Input
             value={message}
             onChangeText={setMessage}
-            placeholder="Décrivez en détail ce qui a changé..."
+            placeholder={t('describeChange')}
             multiline
             numberOfLines={5}
           />
@@ -117,7 +114,7 @@ export default function PatientAlertScreen() {
 
         {/* Submit */}
         <Button
-          title={loading ? 'Envoi en cours...' : 'Envoyer l\'alerte'}
+          title={loading ? t('sending') : t('sendAlert')}
           onPress={submit}
           loading={loading}
           variant="danger"
@@ -126,11 +123,6 @@ export default function PatientAlertScreen() {
           style={styles.submitBtn}
         />
 
-        {isDemo && (
-          <View style={styles.demoBanner}>
-            <Text style={styles.demoText}>🎮 Mode démo - L'alerte sera sauvegardée localement</Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -215,18 +207,5 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     marginTop: 8,
-  },
-  demoBanner: {
-    backgroundColor: colors.primary + '15',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  demoText: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: '500',
   },
 });

@@ -1,56 +1,53 @@
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, Card, colors, Header, Input, Slider } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { demoAddReport } from '@/lib/demo-storage';
+import { useI18n } from '@/lib/i18n';
 
 export default function PatientTodayScreen() {
-  const { signOut, isDemo } = useAuth();
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const { t } = useI18n();
 
-  const [fatigue, setFatigue] = useState(5);
-  const [pain, setPain] = useState(0);
-  const [walkingDifficulty, setWalkingDifficulty] = useState(0);
-  const [vision, setVision] = useState(0);
+  const [motorDisorders, setMotorDisorders] = useState(0);
+  const [balanceWalking, setBalanceWalking] = useState(0);
+  const [urinaryDisorders, setUrinaryDisorders] = useState(0);
+  const [cognitiveDisorders, setCognitiveDisorders] = useState(0);
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/(auth)/login');
+  };
 
   const submit = async () => {
     try {
       setLoading(true);
-      if (isDemo) {
-        await demoAddReport({
-          fatigue,
-          pain,
-          walkingDifficulty,
-          vision,
-          comment,
-        });
-        Alert.alert('✅ Succès', 'Votre état a été enregistré (mode démo)');
-      } else {
-        await api.post('/reports', {
-          fatigue,
-          pain,
-          walkingDifficulty,
-          vision,
-          comment,
-        });
-        Alert.alert('✅ Succès', 'Votre état a été enregistré');
-      }
+      await api.post('/reports', {
+        motorDisorders,
+        balanceWalking,
+        urinaryDisorders,
+        cognitiveDisorders,
+        comment,
+      });
+      Alert.alert(t('success'), t('reportSaved'));
       setComment('');
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible d\'enregistrer');
+      Alert.alert(t('error'), e?.response?.data?.error || t('reportError'));
     } finally {
       setLoading(false);
     }
   };
 
   const getOverallStatus = () => {
-    const avg = (fatigue + pain + walkingDifficulty + vision) / 4;
-    if (avg <= 3) return { label: 'Bon', color: colors.success, icon: '😊' };
-    if (avg <= 6) return { label: 'Moyen', color: colors.warning, icon: '😐' };
-    return { label: 'À surveiller', color: colors.danger, icon: '😟' };
+    const avg = (motorDisorders + balanceWalking + urinaryDisorders + cognitiveDisorders) / 4;
+    if (avg <= 3) return { label: t('good'), color: colors.success, icon: '' };
+    if (avg <= 6) return { label: t('medium'), color: colors.warning, icon: '' };
+    return { label: t('toWatch'), color: colors.danger, icon: '' };
   };
 
   const status = getOverallStatus();
@@ -58,11 +55,11 @@ export default function PatientTodayScreen() {
   return (
     <View style={styles.container}>
       <Header
-        title="Aujourd'hui"
-        subtitle="Comment vous sentez-vous ?"
+        title={t('today')}
+        subtitle={t('howAreYou')}
         rightAction={
-          <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Déconnexion</Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </TouchableOpacity>
         }
       />
@@ -73,56 +70,77 @@ export default function PatientTodayScreen() {
           <View style={styles.statusHeader}>
             <Text style={styles.statusIcon}>{status.icon}</Text>
             <View>
-              <Text style={styles.statusLabel}>État général</Text>
+              <Text style={styles.statusLabel}>{t('generalStatus')}</Text>
               <Text style={[styles.statusValue, { color: status.color }]}>{status.label}</Text>
             </View>
           </View>
           <View style={styles.statusBars}>
-            <View style={[styles.statusBar, { backgroundColor: status.color, width: `${(fatigue + pain + walkingDifficulty + vision) / 40 * 100}%` }]} />
+            <View style={[styles.statusBar, { backgroundColor: status.color, width: `${(motorDisorders + balanceWalking + urinaryDisorders + cognitiveDisorders) / 40 * 100}%` }]} />
           </View>
         </Card>
 
         {/* Health Metrics Card */}
         <Card>
-          <Text style={styles.cardTitle}>Indicateurs de santé</Text>
-          <Text style={styles.cardSubtitle}>Évaluez chaque symptôme de 0 à 10</Text>
+          <Text style={styles.cardTitle}>{t('healthIndicators')}</Text>
+          <Text style={styles.cardSubtitle}>{t('rateSymptoms')}</Text>
 
           <Slider
-            label="Fatigue"
-            value={fatigue}
-            onValueChange={setFatigue}
-            icon="😴"
+            label={t('motorDisorders')}
+            value={motorDisorders}
+            onValueChange={setMotorDisorders}
+            icon=""
           />
 
           <Slider
-            label="Douleur"
-            value={pain}
-            onValueChange={setPain}
-            icon="😣"
+            label={t('balanceWalking')}
+            value={balanceWalking}
+            onValueChange={setBalanceWalking}
+            icon=""
           />
 
           <Slider
-            label="Difficulté de marche"
-            value={walkingDifficulty}
-            onValueChange={setWalkingDifficulty}
-            icon="🚶"
+            label={t('urinaryDisorders')}
+            value={urinaryDisorders}
+            onValueChange={setUrinaryDisorders}
+            icon=""
           />
 
           <Slider
-            label="Vision"
-            value={vision}
-            onValueChange={setVision}
-            icon="👁️"
+            label={t('cognitiveDisorders')}
+            value={cognitiveDisorders}
+            onValueChange={setCognitiveDisorders}
+            icon=""
           />
+        </Card>
+
+        {/* Treatment Card */}
+        <Card>
+          <Text style={styles.cardTitle}>{t('myTreatment')}</Text>
+          <Text style={styles.cardSubtitle}>{t('treatmentInfo')}</Text>
+
+          <View style={styles.treatmentSection}>
+            <Text style={styles.treatmentCategory}>{t('relapseTreatment')}</Text>
+            <Text style={styles.treatmentDetail}>{t('relapseTreatmentDesc')}</Text>
+          </View>
+
+          <View style={styles.treatmentSection}>
+            <Text style={styles.treatmentCategory}>{t('maintenanceTreatment')}</Text>
+            <Text style={styles.treatmentDetail}>{t('maintenanceTreatmentDesc')}</Text>
+          </View>
+
+          <View style={styles.treatmentSection}>
+            <Text style={styles.treatmentCategory}>{t('symptomaticTreatment')}</Text>
+            <Text style={styles.treatmentDetail}>{t('symptomaticTreatmentDesc')}</Text>
+          </View>
         </Card>
 
         {/* Comment Card */}
         <Card>
-          <Text style={styles.cardTitle}>Notes supplémentaires</Text>
+          <Text style={styles.cardTitle}>{t('additionalNotes')}</Text>
           <Input
             value={comment}
             onChangeText={setComment}
-            placeholder="Décrivez comment vous vous sentez aujourd'hui..."
+            placeholder={t('describeFeeling')}
             multiline
             numberOfLines={4}
           />
@@ -130,18 +148,12 @@ export default function PatientTodayScreen() {
 
         {/* Submit Button */}
         <Button
-          title={loading ? 'Enregistrement...' : 'Enregistrer mon état'}
+          title={loading ? t('submitting') : t('submitReport')}
           onPress={submit}
           loading={loading}
           size="large"
           style={styles.submitBtn}
         />
-
-        {isDemo && (
-          <View style={styles.demoBanner}>
-            <Text style={styles.demoText}>🎮 Mode démo actif</Text>
-          </View>
-        )}
       </ScrollView>
     </View>
   );
@@ -214,17 +226,18 @@ const styles = StyleSheet.create({
   submitBtn: {
     marginTop: 8,
   },
-  demoBanner: {
-    backgroundColor: colors.primary + '15',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 16,
+  treatmentSection: {
+    marginBottom: 12,
   },
-  demoText: {
-    color: colors.primary,
+  treatmentCategory: {
     fontSize: 14,
     fontWeight: '600',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  treatmentDetail: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    lineHeight: 18,
   },
 });

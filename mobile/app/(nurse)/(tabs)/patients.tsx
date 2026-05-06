@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Badge, Card, colors, EmptyState, Header } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { DEMO_PATIENT, demoGetReports } from '@/lib/demo-storage';
+import { useI18n } from '@/lib/i18n';
 
 type Patient = {
   _id: string;
@@ -18,40 +18,35 @@ type Patient = {
 
 export default function NursePatientsScreen() {
   const router = useRouter();
-  const { signOut, isDemo } = useAuth();
+  const { signOut } = useAuth();
+  const { t } = useI18n();
 
   const [patients, setPatients] = useState<Patient[]>([]);
   const [patientStats, setPatientStats] = useState<Record<string, { count: number; lastDate: string | null }>>({});
   const [loading, setLoading] = useState(false);
 
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/(auth)/login');
+  };
+
   const load = async () => {
     try {
       setLoading(true);
-      if (isDemo) {
-        setPatients([DEMO_PATIENT as any]);
-        const reports = await demoGetReports();
-        setPatientStats({
-          [DEMO_PATIENT._id]: {
-            count: reports.length,
-            lastDate: reports[0]?.createdAt || null,
-          },
-        });
-      } else {
-        const res = await api.get('/nurse/patients');
-        const loadedPatients: Patient[] = res.data.patients || [];
-        setPatients(loadedPatients);
+      const res = await api.get('/nurse/patients');
+      const loadedPatients: Patient[] = res.data.patients || [];
+      setPatients(loadedPatients);
 
-        const stats: Record<string, { count: number; lastDate: string | null }> = {};
-        for (const p of loadedPatients) {
-          stats[p._id] = {
-            count: p.reportCount || 0,
-            lastDate: p.lastReportAt || null,
-          };
-        }
-        setPatientStats(stats);
+      const stats: Record<string, { count: number; lastDate: string | null }> = {};
+      for (const p of loadedPatients) {
+        stats[p._id] = {
+          count: p.reportCount || 0,
+          lastDate: p.lastReportAt || null,
+        };
       }
+      setPatientStats(stats);
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de charger');
+      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -66,24 +61,24 @@ export default function NursePatientsScreen() {
   };
 
   const formatLastReport = (dateStr: string | null) => {
-    if (!dateStr) return 'Aucun rapport';
+    if (!dateStr) return t('noReport');
     const date = new Date(dateStr);
     const today = new Date();
     const diffDays = Math.floor((today.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return "Aujourd'hui";
-    if (diffDays === 1) return 'Hier';
-    if (diffDays < 7) return `Il y a ${diffDays} jours`;
+    if (diffDays === 0) return t('today');
+    if (diffDays === 1) return t('yesterday');
+    if (diffDays < 7) return `${diffDays} ${t('daysAgo')}`;
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
   return (
     <View style={styles.container}>
       <Header
-        title="Mes patients"
-        subtitle={`${patients.length} patient${patients.length !== 1 ? 's' : ''} assigné${patients.length !== 1 ? 's' : ''}`}
+        title={t('myPatients')}
+        subtitle={`${patients.length} ${patients.length !== 1 ? t('patientsAssignedPlural') : t('patientsAssigned')}`}
         rightAction={
-          <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Déconnexion</Text>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+            <Text style={styles.logoutText}>{t('logout')}</Text>
           </TouchableOpacity>
         }
       />
@@ -98,8 +93,8 @@ export default function NursePatientsScreen() {
         {patients.length === 0 ? (
           <EmptyState
             icon="👥"
-            title="Aucun patient"
-            description="Vous n'avez pas encore de patients assignés. Ils apparaîtront ici une fois inscrits."
+            title={t('noPatients')}
+            description={t('noPatientsDesc')}
           />
         ) : (
           patients.map((p) => {
@@ -124,16 +119,16 @@ export default function NursePatientsScreen() {
                 <View style={styles.patientStats}>
                   <View style={styles.statItem}>
                     <Text style={styles.statValue}>{stats?.count || 0}</Text>
-                    <Text style={styles.statLabel}>Rapports</Text>
+                    <Text style={styles.statLabel}>{t('reports')}</Text>
                   </View>
                   <View style={styles.statDivider} />
                   <View style={styles.statItem}>
                     <Text style={styles.statValue}>{formatLastReport(stats?.lastDate || null)}</Text>
-                    <Text style={styles.statLabel}>Dernier</Text>
+                    <Text style={styles.statLabel}>{t('lastReport')}</Text>
                   </View>
                 </View>
 
-                {isDemo && p._id === DEMO_PATIENT._id && (
+                {false && (
                   <View style={styles.demoBadge}>
                     <Badge label="Mode démo" variant="info" />
                   </View>

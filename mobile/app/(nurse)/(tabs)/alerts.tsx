@@ -1,30 +1,33 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 
 import { Badge, Button, Card, colors, EmptyState, Header } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
-import { demoGetAlerts, demoResolveAlert, DemoAlert } from '@/lib/demo-storage';
+import { useI18n } from '@/lib/i18n';
 
 export default function NurseAlertsScreen() {
-  const { isDemo } = useAuth();
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const { t } = useI18n();
 
-  const [alerts, setAlerts] = useState<DemoAlert[]>([]);
+  const [alerts, setAlerts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const handleLogout = async () => {
+    await signOut();
+    router.replace('/(auth)/login');
+  };
 
   const load = async () => {
     try {
       setLoading(true);
-      if (isDemo) {
-        const local = await demoGetAlerts();
-        setAlerts(local);
-      } else {
-        const res = await api.get('/nurse/alerts');
-        setAlerts(res.data.alerts || []);
-      }
+      const res = await api.get('/nurse/alerts');
+      setAlerts(res.data.alerts || []);
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible de charger');
+      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -32,15 +35,10 @@ export default function NurseAlertsScreen() {
 
   const resolve = async (alertId: string) => {
     try {
-      if (isDemo) {
-        await demoResolveAlert(alertId);
-        await load();
-      } else {
-        await api.post(`/nurse/alerts/${alertId}/resolve`);
-        await load();
-      }
+      await api.post(`/nurse/alerts/${alertId}/resolve`);
+      await load();
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Impossible');
+      Alert.alert(t('error'), e?.response?.data?.error || t('error'));
     }
   };
 
@@ -56,10 +54,10 @@ export default function NurseAlertsScreen() {
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'À l\'instant';
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
+    if (diffMins < 1) return t('justNow');
+    if (diffMins < 60) return `${diffMins} ${t('minutesAgo')}`;
+    if (diffHours < 24) return `${diffHours}${t('hoursAgo')}`;
+    if (diffDays < 7) return `${diffDays}j`;
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   };
 
@@ -69,14 +67,14 @@ export default function NurseAlertsScreen() {
   return (
     <View style={styles.container}>
       <Header
-        title="Alertes"
-        subtitle={pendingAlerts.length > 0 ? `${pendingAlerts.length} nouvelle${pendingAlerts.length !== 1 ? 's' : ''}` : 'Aucune nouvelle alerte'}
+        title={t('alerts')}
+        subtitle={pendingAlerts.length > 0 ? `${pendingAlerts.length} ${pendingAlerts.length !== 1 ? t('newAlertsPlural') : t('newAlerts')}` : t('noNewAlerts')}
         rightAction={
           <TouchableOpacity onPress={load} disabled={loading} style={styles.refreshBtn}>
             {loading ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Text style={styles.refreshText}>↻</Text>
+              <Text style={styles.refreshText}></Text>
             )}
           </TouchableOpacity>
         }
@@ -91,16 +89,16 @@ export default function NurseAlertsScreen() {
       >
         {alerts.length === 0 ? (
           <EmptyState
-            icon="🔔"
-            title="Aucune alerte"
-            description="Les alertes de vos patients apparaîtront ici. Vous serez notifié en cas de changement important."
+            icon="or"
+            title={t('noAlerts')}
+            description={t('noPatientsDesc')}
           />
         ) : (
           <>
             {/* Pending Alerts */}
             {pendingAlerts.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>À traiter</Text>
+                <Text style={styles.sectionTitle}>{t('toProcess')}</Text>
                 {pendingAlerts.map((a) => (
                   <Card key={a._id} style={styles.alertCard}>
                     <LinearGradient
@@ -111,14 +109,14 @@ export default function NurseAlertsScreen() {
                     />
                     <View style={styles.alertContent}>
                       <View style={styles.alertHeader}>
-                        <Badge label="Nouveau" variant="danger" />
+                        <Badge label={t('new')} variant="danger" />
                         <Text style={styles.alertTime}>{formatTime(a.createdAt)}</Text>
                       </View>
                       <Text style={styles.alertMessage}>{a.message}</Text>
                       <View style={styles.alertFooter}>
-                        <Text style={styles.patientId}>Patient: {a.patientId}</Text>
+                        <Text style={styles.patientId}>{t('patient')}: {a.patientId}</Text>
                         <Button
-                          title="Résoudre"
+                          title={t('resolve')}
                           onPress={() => resolve(a._id)}
                           variant="primary"
                           size="small"
@@ -133,17 +131,17 @@ export default function NurseAlertsScreen() {
             {/* Resolved Alerts */}
             {resolvedAlerts.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Résolues</Text>
+                <Text style={styles.sectionTitle}>{t('resolved')}</Text>
                 {resolvedAlerts.map((a) => (
                   <Card key={a._id} style={[styles.alertCard, styles.resolvedCard] as any}>
                     <View style={[styles.alertIndicator, { backgroundColor: colors.success }]} />
                     <View style={styles.alertContent}>
                       <View style={styles.alertHeader}>
-                        <Badge label="Résolu" variant="success" />
+                        <Badge label={t('resolved')} variant="success" />
                         <Text style={styles.alertTime}>{formatTime(a.createdAt)}</Text>
                       </View>
                       <Text style={[styles.alertMessage, styles.resolvedMessage]}>{a.message}</Text>
-                      <Text style={styles.patientId}>Patient: {a.patientId}</Text>
+                      <Text style={styles.patientId}>{t('patient')}: {a.patientId}</Text>
                     </View>
                   </Card>
                 ))}

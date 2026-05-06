@@ -1,0 +1,25 @@
+services:
+  # 1. The Backend API (Web Service)
+  - type: web
+    name: napp-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false # Set this in Render Dashboard
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3001
+      - key: NODE_ENV
+        value: production
+
+  # 2. The Website (Static Site)
+  - type: static
+    name: napp-website
+    rootDir: website
+    publishPath: .
+    # No build command needed for this static site
+    buildCommand: ""

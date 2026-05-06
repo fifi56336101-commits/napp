@@ -1,30 +1,33 @@
-import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Link, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Link, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, colors, Input } from '@/components/ui';
 
 import { api } from '@/lib/api';
 import { registerPushToken, useAuth } from '@/lib/auth-context';
+import { Language, useI18n } from '@/lib/i18n';
 import { getExpoPushTokenSafely } from '@/lib/push';
+
+const LANGUAGES = [
+  { code: 'fr' as Language, label: 'Français', flag: 'fr' },
+  { code: 'en' as Language, label: 'English', flag: 'gb' },
+  { code: 'ar' as Language, label: 'Arabic', flag: 'sa' },
+];
 
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn } = useAuth();
+  const { t, language, setLanguage } = useI18n();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const onDemo = async (role: 'patient' | 'nurse') => {
-    await signIn('demo', role);
-    router.replace('/');
-  };
-
   const onLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs');
+      Alert.alert(t('error'), t('fillAllFields'));
       return;
     }
     try {
@@ -42,10 +45,15 @@ export default function LoginScreen() {
 
       router.replace('/');
     } catch (e: any) {
-      Alert.alert('Erreur', e?.response?.data?.error || 'Connexion impossible');
+      Alert.alert(t('error'), e?.response?.data?.error || t('loginError'));
     } finally {
       setLoading(false);
     }
+  };
+
+  const getFlag = (code: string) => {
+    const flags: Record<string, string> = { fr: 'fr', en: 'gb', ar: 'sa' };
+    return flags[code] || 'fr';
   };
 
   return (
@@ -56,9 +64,25 @@ export default function LoginScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
+        {/* Language Selector */}
+        <View style={styles.langSelector}>
+          {LANGUAGES.map((lang) => (
+            <TouchableOpacity
+              key={lang.code}
+              style={[
+                styles.langChip,
+                language === lang.code && styles.langChipActive,
+              ]}
+              onPress={() => setLanguage(lang.code)}
+            >
+              <Text style={styles.langFlag}>{getFlag(lang.code)}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <Text style={styles.logo}>🩺</Text>
-        <Text style={styles.title}>Suivi SEP</Text>
-        <Text style={styles.subtitle}>Suivi quotidien de la sclérose en plaques</Text>
+        <Text style={styles.title}>{t('appName')}</Text>
+        <Text style={styles.subtitle}>{t('appTagline')}</Text>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -66,59 +90,38 @@ export default function LoginScreen() {
         style={styles.content}
       >
         <ScrollView contentContainerStyle={styles.form} showsVerticalScrollIndicator={false}>
-          <Text style={styles.formTitle}>Connexion</Text>
+          <Text style={styles.formTitle}>{t('loginTitle')}</Text>
 
           <Input
-            label="Email"
+            label={t('email')}
             value={email}
             onChangeText={setEmail}
-            placeholder="votre@email.com"
+            placeholder={t('emailPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
             icon={<Text style={{ fontSize: 18 }}>📧</Text>}
           />
 
           <Input
-            label="Mot de passe"
+            label={t('password')}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
+            placeholder={t('passwordPlaceholder')}
             secureTextEntry
             icon={<Text style={{ fontSize: 18 }}>🔒</Text>}
           />
 
           <Button
-            title={loading ? 'Connexion...' : 'Se connecter'}
+            title={loading ? t('loggingIn') : t('loginButton')}
             onPress={onLogin}
             loading={loading}
             size="large"
             style={{ marginTop: 8 }}
           />
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou essayer</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          <View style={styles.demoButtons}>
-            <Button
-              title="👤 Patient"
-              onPress={() => onDemo('patient')}
-              variant="outline"
-              size="medium"
-            />
-            <Button
-              title="👩‍⚕️ Infirmier"
-              onPress={() => onDemo('nurse')}
-              variant="outline"
-              size="medium"
-            />
-          </View>
-
           <Link href="/(auth)/register" asChild>
             <Text style={styles.registerLink}>
-              Pas de compte ? <Text style={{ color: colors.primary, fontWeight: '600' }}>Créer un compte</Text>
+              {t('noAccount')} <Text style={{ color: colors.primary, fontWeight: '600' }}>{t('createAccount')}</Text>
             </Text>
           </Link>
         </ScrollView>
@@ -133,26 +136,47 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingTop: 80,
+    paddingTop: 60,
     paddingBottom: 40,
     paddingHorizontal: 24,
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
   },
+  langSelector: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  langChip: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  langChipActive: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  langFlag: {
+    fontSize: 16,
+  },
   logo: {
     fontSize: 56,
     marginBottom: 12,
+    textAlign: 'center',
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
     color: colors.white,
     letterSpacing: -0.5,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.85)',
     marginTop: 8,
+    textAlign: 'center',
   },
   content: {
     flex: 1,
@@ -166,6 +190,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.text,
     marginBottom: 24,
+  },
+  registerLink: {
+    textAlign: 'center',
+    marginTop: 32,
+    fontSize: 15,
+    color: colors.textSecondary,
   },
   divider: {
     flexDirection: 'row',
@@ -181,15 +211,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     fontSize: 14,
     color: colors.textMuted,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  registerLink: {
-    textAlign: 'center',
-    marginTop: 32,
-    fontSize: 15,
-    color: colors.textSecondary,
   },
 });
