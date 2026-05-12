@@ -3,17 +3,17 @@ import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, Card, colors, Header, Input } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
 const QUICK_REASONS = [
-  { icon: '', labelKey: 'motorWeakness' as const },
-  { icon: '', labelKey: 'balanceLoss' as const },
-  { icon: '', labelKey: 'urinaryUrgency' as const },
-  { icon: '', labelKey: 'confusion' as const },
-  { icon: '', labelKey: 'visionProblems' as const },
-  { icon: '', labelKey: 'fever' as const },
+  { icon: '🦵', labelKey: 'motorWeakness' as const },
+  { icon: '🚶', labelKey: 'balanceLoss' as const },
+  { icon: '💧', labelKey: 'urinaryUrgency' as const },
+  { icon: '🧠', labelKey: 'confusion' as const },
+  { icon: '👁️', labelKey: 'visionProblems' as const },
+  { icon: '🌡️', labelKey: 'fever' as const },
 ];
 
 export default function PatientAlertScreen() {
@@ -36,7 +36,7 @@ export default function PatientAlertScreen() {
       setMessage('');
       setSelectedReason(null);
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('sendError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('sendError')));
     } finally {
       setLoading(false);
     }

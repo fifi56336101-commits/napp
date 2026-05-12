@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Badge, Card, colors, EmptyState, Header } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -33,15 +34,17 @@ export default function PatientHistoryScreen() {
       const res = await api.get('/reports/me');
       setReports(res.data.reports || []);
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loadError')));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -95,7 +98,9 @@ export default function PatientHistoryScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />
         }
       >
-        {reports.length === 0 ? (
+        {loading && reports.length === 0 ? (
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        ) : reports.length === 0 ? (
           <EmptyState
             icon="📋"
             title={t('noReports')}
@@ -117,7 +122,7 @@ export default function PatientHistoryScreen() {
 
               <View style={styles.metricsGrid}>
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricIcon}>🦵</Text>
                   <Text style={styles.metricLabel}>{t('motorDisorders')}</Text>
                   <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.motorDisorders) + '30' }]}>
                     <View style={[styles.metricFill, { width: `${r.motorDisorders * 10}%`, backgroundColor: getScoreColor(r.motorDisorders) }]} />
@@ -126,7 +131,7 @@ export default function PatientHistoryScreen() {
                 </View>
 
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricIcon}>🚶</Text>
                   <Text style={styles.metricLabel}>{t('balanceWalking')}</Text>
                   <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.balanceWalking) + '30' }]}>
                     <View style={[styles.metricFill, { width: `${r.balanceWalking * 10}%`, backgroundColor: getScoreColor(r.balanceWalking) }]} />
@@ -135,7 +140,7 @@ export default function PatientHistoryScreen() {
                 </View>
 
                 <View style={styles.metricItem}>
-                  <Text style={styles.metricIcon}>�</Text>
+                  <Text style={styles.metricIcon}>💧</Text>
                   <Text style={styles.metricLabel}>{t('urinaryDisorders')}</Text>
                   <View style={[styles.metricBar, { backgroundColor: getScoreColor(r.urinaryDisorders) + '30' }]}>
                     <View style={[styles.metricFill, { width: `${r.urinaryDisorders * 10}%`, backgroundColor: getScoreColor(r.urinaryDisorders) }]} />
@@ -269,5 +274,8 @@ const styles = StyleSheet.create({
     width: 2,
     height: 16,
     backgroundColor: colors.border,
+  },
+  loader: {
+    paddingVertical: 40,
   },
 });

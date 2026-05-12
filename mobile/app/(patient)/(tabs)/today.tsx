@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, Card, colors, Header, Input, Slider } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -37,7 +37,7 @@ export default function PatientTodayScreen() {
       Alert.alert(t('success'), t('reportSaved'));
       setComment('');
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('reportError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('reportError')));
     } finally {
       setLoading(false);
     }
@@ -45,9 +45,9 @@ export default function PatientTodayScreen() {
 
   const getOverallStatus = () => {
     const avg = (motorDisorders + balanceWalking + urinaryDisorders + cognitiveDisorders) / 4;
-    if (avg <= 3) return { label: t('good'), color: colors.success, icon: '' };
-    if (avg <= 6) return { label: t('medium'), color: colors.warning, icon: '' };
-    return { label: t('toWatch'), color: colors.danger, icon: '' };
+    if (avg <= 3) return { label: t('good'), color: colors.success, icon: '✅' };
+    if (avg <= 6) return { label: t('medium'), color: colors.warning, icon: '⚠️' };
+    return { label: t('toWatch'), color: colors.danger, icon: '🔴' };
   };
 
   const status = getOverallStatus();

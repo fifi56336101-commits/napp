@@ -1,6 +1,6 @@
 const http = require('http');
 
-const { createApp } = require('./src/app');
+const { createApp } = require('./src/app.js');
 
 async function start() {
   const app = await createApp();

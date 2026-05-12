@@ -5,7 +5,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, To
 
 import { Button, colors, Input } from '@/components/ui';
 
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { registerPushToken, useAuth } from '@/lib/auth-context';
 import { Language, useI18n } from '@/lib/i18n';
 import { getExpoPushTokenSafely } from '@/lib/push';
@@ -45,7 +45,7 @@ export default function LoginScreen() {
 
       router.replace('/');
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loginError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loginError')));
     } finally {
       setLoading(false);
     }

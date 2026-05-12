@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Badge, Button, Card, colors, EmptyState, Header, Input } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -60,7 +60,7 @@ export default function NursePatientDetailScreen() {
         interventions: Array.isArray(loaded?.interventions) ? loaded.interventions : [],
       });
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loadError')));
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ export default function NursePatientDetailScreen() {
       setPatient(res.data.patient);
       Alert.alert(t('success'), t('carePlanSaved'));
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('updateError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('updateError')));
     } finally {
       setSavingCarePlan(false);
     }
@@ -146,6 +146,10 @@ export default function NursePatientDetailScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />
         }
       >
+        {loading && !patient ? (
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        ) : (
+        <>
         {/* Patient Info Card */}
         <LinearGradient
           colors={[colors.primary, colors.primaryDark]}
@@ -261,17 +265,17 @@ export default function NursePatientDetailScreen() {
 
                 <View style={styles.metricsRow}>
                   <View style={styles.metricItem}>
-                    <Text style={styles.metricIcon}>�</Text>
+                    <Text style={styles.metricIcon}>🦵</Text>
                     <Text style={[styles.metricValue, { color: getScoreColor(r.motorDisorders || 0) }]}>{r.motorDisorders || 0}</Text>
                     <Text style={styles.metricLabel}>{t('motorDisorders')}</Text>
                   </View>
                   <View style={styles.metricItem}>
-                    <Text style={styles.metricIcon}>�</Text>
+                    <Text style={styles.metricIcon}>🚶</Text>
                     <Text style={[styles.metricValue, { color: getScoreColor(r.balanceWalking || 0) }]}>{r.balanceWalking || 0}</Text>
                     <Text style={styles.metricLabel}>{t('balanceWalking')}</Text>
                   </View>
                   <View style={styles.metricItem}>
-                    <Text style={styles.metricIcon}>�</Text>
+                    <Text style={styles.metricIcon}>💧</Text>
                     <Text style={[styles.metricValue, { color: getScoreColor(r.urinaryDisorders || 0) }]}>{r.urinaryDisorders || 0}</Text>
                     <Text style={styles.metricLabel}>{t('urinaryDisorders')}</Text>
                   </View>
@@ -292,6 +296,8 @@ export default function NursePatientDetailScreen() {
             ))
           )}
         </View>
+        </>
+        )}
       </ScrollView>
     </View>
   );
@@ -527,9 +533,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     textTransform: 'uppercase',
   },
-  interventionText: {
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
+  loader: {
+    paddingVertical: 40,
   },
 });

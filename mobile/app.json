@@ -50,7 +50,11 @@
       ]
     ],
     "extra": {
-      "API_BASE_URL": "https://napp-qz5x.onrender.com/api"
+      "API_BASE_URL": "https://napp-qz5x.onrender.com/api",
+      "router": {},
+      "eas": {
+        "projectId": "c8918dd1-ebfa-4b29-93eb-6f85f64705e2"
+      }
     },
     "experiments": {
       "typedRoutes": true,

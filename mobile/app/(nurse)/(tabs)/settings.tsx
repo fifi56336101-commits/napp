@@ -1,9 +1,9 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Button, Card, colors, Header, Input } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -42,15 +42,17 @@ export default function NurseSettingsScreen() {
       setUser(res.data.user);
       setName(res.data.user.name);
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loadProfileError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loadProfileError')));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    loadProfile();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadProfile();
+    }, [])
+  );
 
   const saveProfile = async () => {
     if (!name.trim()) {
@@ -65,7 +67,7 @@ export default function NurseSettingsScreen() {
       }
       Alert.alert(t('success'), t('profileUpdated'));
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('updateError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('updateError')));
     } finally {
       setSaving(false);
     }
@@ -86,7 +88,7 @@ export default function NurseSettingsScreen() {
           <Text style={styles.cardTitle}>{t('profile')}</Text>
 
           {loading ? (
-            <Text style={styles.loadingText}>{t('loading')}</Text>
+            <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
           ) : (
             <>
               <Input
@@ -176,11 +178,8 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 16,
   },
-  loadingText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: 16,
+  loader: {
+    paddingVertical: 24,
   },
   saveBtn: {
     marginTop: 12,

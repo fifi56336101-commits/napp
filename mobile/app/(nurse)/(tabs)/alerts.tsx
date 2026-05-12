@@ -1,10 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Badge, Button, Card, colors, EmptyState, Header } from '@/components/ui';
-import { api } from '@/lib/api';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -27,7 +27,7 @@ export default function NurseAlertsScreen() {
       const res = await api.get('/nurse/alerts');
       setAlerts(res.data.alerts || []);
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loadError')));
     } finally {
       setLoading(false);
     }
@@ -38,13 +38,15 @@ export default function NurseAlertsScreen() {
       await api.post(`/nurse/alerts/${alertId}/resolve`);
       await load();
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('error'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('error')));
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -74,7 +76,7 @@ export default function NurseAlertsScreen() {
             {loading ? (
               <ActivityIndicator size="small" color={colors.white} />
             ) : (
-              <Text style={styles.refreshText}></Text>
+              <Text style={styles.refreshText}>↻</Text>
             )}
           </TouchableOpacity>
         }
@@ -87,11 +89,13 @@ export default function NurseAlertsScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />
         }
       >
-        {alerts.length === 0 ? (
+        {loading && alerts.length === 0 ? (
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        ) : alerts.length === 0 ? (
           <EmptyState
-            icon="or"
+            icon="🔔"
             title={t('noAlerts')}
-            description={t('noPatientsDesc')}
+            description={t('noAlertsDesc')}
           />
         ) : (
           <>
@@ -228,5 +232,8 @@ const styles = StyleSheet.create({
   patientId: {
     fontSize: 12,
     color: colors.textMuted,
+  },
+  loader: {
+    paddingVertical: 40,
   },
 });

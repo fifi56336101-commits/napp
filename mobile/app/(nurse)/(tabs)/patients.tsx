@@ -1,9 +1,9 @@
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { ActivityIndicator, Alert, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Badge, Card, colors, EmptyState, Header } from '@/components/ui';
-import { api } from '@/lib/api';
+import { Card, colors, EmptyState, Header } from '@/components/ui';
+import { api, getApiErrorMessage } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 
@@ -46,15 +46,17 @@ export default function NursePatientsScreen() {
       }
       setPatientStats(stats);
     } catch (e: any) {
-      Alert.alert(t('error'), e?.response?.data?.error || t('loadError'));
+      Alert.alert(t('error'), getApiErrorMessage(e, t('loadError')));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [])
+  );
 
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -90,7 +92,9 @@ export default function NursePatientsScreen() {
           <RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />
         }
       >
-        {patients.length === 0 ? (
+        {loading && patients.length === 0 ? (
+          <ActivityIndicator size="large" color={colors.primary} style={styles.loader} />
+        ) : patients.length === 0 ? (
           <EmptyState
             icon="👥"
             title={t('noPatients')}
@@ -128,11 +132,6 @@ export default function NursePatientsScreen() {
                   </View>
                 </View>
 
-                {false && (
-                  <View style={styles.demoBadge}>
-                    <Badge label="Mode démo" variant="info" />
-                  </View>
-                )}
               </Card>
             );
           })
@@ -226,9 +225,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     marginVertical: 4,
   },
-  demoBadge: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
+  loader: {
+    paddingVertical: 40,
   },
 });
